@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, {
   AnimatedRegion,
   Marker,
@@ -227,7 +228,7 @@ const RealTimeTrackingScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title}>Real-time tracking</Text>
         <Text style={styles.subtitle}>
@@ -324,7 +325,7 @@ const RealTimeTrackingScreen = ({ navigation }) => {
           disabled={ride.rideStatus !== RIDE_STATUS.completed}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

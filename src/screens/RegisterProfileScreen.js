@@ -14,6 +14,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
 import AppButton from '../components/AppButton';
@@ -180,7 +181,7 @@ const RegisterProfileScreen = () => {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -282,7 +283,7 @@ const RegisterProfileScreen = () => {
         visible={isSavingProfile}
         message="Saving profile..."
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

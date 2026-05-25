@@ -16,6 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, {
   Marker,
   Polyline,
@@ -268,7 +269,7 @@ const RideRequestScreen = ({ navigation }) => {
   }, [getCurrentLocation]);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -399,7 +400,7 @@ const RideRequestScreen = ({ navigation }) => {
         visible={isCalculatingRide}
         message="Calculating route and fare..."
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

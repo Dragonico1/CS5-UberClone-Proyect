@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
 import AppButton from '../components/AppButton';
@@ -236,7 +237,7 @@ const PaymentScreen = ({ navigation }) => {
   }, [dispatch]);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title}>Payment</Text>
         <Text style={styles.subtitle}>
@@ -335,7 +336,7 @@ const PaymentScreen = ({ navigation }) => {
         visible={payment.isLoading}
         message="Processing payment..."
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
