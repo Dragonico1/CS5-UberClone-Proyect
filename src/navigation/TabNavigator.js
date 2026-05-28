@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import RegisterProfileScreen from '../screens/RegisterProfileScreen';
 import RideRequestScreen from '../screens/RideRequestScreen';
@@ -24,9 +25,15 @@ const Tab = createBottomTabNavigator();
  * - Ride request
  * - Trip history
  *
+ * useSafeAreaInsets is used to calculate the real bottom inset
+ * (home indicator on iPhone, navigation bar on Android) so the
+ * tab bar height never overlaps system UI elements.
+ *
  * @returns {React.ReactElement} Bottom tab navigator.
  */
 const TabNavigator = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       initialRouteName="RideRequest"
@@ -37,8 +44,8 @@ const TabNavigator = () => {
         tabBarStyle: {
           backgroundColor: COLORS.surface,
           borderTopColor: COLORS.border,
-          height: 62,
-          paddingBottom: 8,
+          height: 52 + insets.bottom,
+          paddingBottom: insets.bottom + 4,
           paddingTop: 8,
         },
         tabBarLabelStyle: {

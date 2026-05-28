@@ -16,6 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, {
   Marker,
   Polyline,
@@ -268,7 +269,7 @@ const RideRequestScreen = ({ navigation }) => {
   }, [getCurrentLocation]);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -340,24 +341,20 @@ const RideRequestScreen = ({ navigation }) => {
 
           {placePredictions.length > 0 ? (
             <View style={styles.predictionsContainer}>
-              <FlatList
-                data={placePredictions}
-                keyExtractor={(item) => item.place_id}
-                keyboardShouldPersistTaps="handled"
-                renderItem={({ item }) => (
-                  <Pressable
-                    style={styles.predictionItem}
-                    onPress={() => handleSelectPlace(item)}
-                  >
-                    <Text style={styles.predictionMainText}>
-                      {item.structured_formatting?.main_text || item.description}
-                    </Text>
-                    <Text style={styles.predictionSecondaryText}>
-                      {item.structured_formatting?.secondary_text || ''}
-                    </Text>
-                  </Pressable>
-                )}
-              />
+              {placePredictions.map((item) => (
+                <Pressable
+                  key={item.place_id}
+                  style={styles.predictionItem}
+                  onPress={() => handleSelectPlace(item)}
+                >
+                  <Text style={styles.predictionMainText}>
+                    {item.structured_formatting?.main_text || item.description}
+                  </Text>
+                  <Text style={styles.predictionSecondaryText}>
+                    {item.structured_formatting?.secondary_text || ''}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
           ) : null}
         </View>
@@ -399,7 +396,7 @@ const RideRequestScreen = ({ navigation }) => {
         visible={isCalculatingRide}
         message="Calculating route and fare..."
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

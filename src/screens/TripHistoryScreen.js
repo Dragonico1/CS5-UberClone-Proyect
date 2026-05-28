@@ -13,6 +13,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
 import AppButton from '../components/AppButton';
@@ -221,7 +222,7 @@ const TripHistoryScreen = () => {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title}>Trip history</Text>
         <Text style={styles.subtitle}>
@@ -275,7 +276,7 @@ const TripHistoryScreen = () => {
         visible={isLoading}
         message="Loading trip history..."
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

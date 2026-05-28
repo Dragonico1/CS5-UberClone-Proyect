@@ -1,5 +1,20 @@
-import firestore from '@react-native-firebase/firestore';
-import { database, collections } from './firebaseConfig';
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  getDoc,
+  doc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+} from '@react-native-firebase/firestore';
+
+import { collections } from './firebaseConfig';
+
+const db = getFirestore();
 
 /**
  * Saves a completed trip in Firestore.
@@ -39,12 +54,13 @@ export const saveCompletedTrip = async (tripData) => {
       paymentProvider: tripData.paymentProvider,
       transactionId: tripData.transactionId,
       status: 'completed',
-      createdAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
     };
 
-    const tripReference = await database
-      .collection(collections.trips)
-      .add(tripToSave);
+    const tripReference = await addDoc(
+      collection(db, collections.trips),
+      tripToSave,
+    );
 
     return {
       id: tripReference.id,
@@ -68,11 +84,13 @@ export const getTripsByUser = async (userId) => {
       throw new Error('User ID is required.');
     }
 
-    const snapshot = await database
-      .collection(collections.trips)
-      .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const q = query(
+      collection(db, collections.trips),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc'),
+    );
+
+    const snapshot = await getDocs(q);
 
     const trips = snapshot.docs.map((documentSnapshot) => {
       const data = documentSnapshot.data();
@@ -104,12 +122,11 @@ export const getTripById = async (tripId) => {
       throw new Error('Trip ID is required.');
     }
 
-    const tripSnapshot = await database
-      .collection(collections.trips)
-      .doc(tripId)
-      .get();
+    const tripSnapshot = await getDoc(
+      doc(db, collections.trips, tripId),
+    );
 
-    if (!tripSnapshot.exists) {
+    if (!tripSnapshot.exists()) {
       return null;
     }
 
@@ -144,13 +161,10 @@ export const updateTripStatus = async (tripId, status) => {
       throw new Error('Trip status is required.');
     }
 
-    await database
-      .collection(collections.trips)
-      .doc(tripId)
-      .update({
-        status,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
-      });
+    await updateDoc(doc(db, collections.trips, tripId), {
+      status,
+      updatedAt: serverTimestamp(),
+    });
 
     return true;
   } catch (error) {

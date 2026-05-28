@@ -2,22 +2,25 @@
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import StackNavigator from './StackNavigator';
 
 /**
  * Main app navigator.
  *
- * This component wraps the entire navigation system inside NavigationContainer.
- * React Navigation needs this container to manage navigation state internally.
+ * SafeAreaProvider must wrap NavigationContainer so that React Navigation
+ * and all screens can read the device insets (notch, home indicator, status bar).
  *
  * @returns {React.ReactElement} Main navigation container.
  */
 const AppNavigator = () => {
   return (
-    <NavigationContainer>
-      <StackNavigator />
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <StackNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 };
 

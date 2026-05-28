@@ -1,12 +1,9 @@
-import firestore from '@react-native-firebase/firestore';
-
 /**
- * Firestore database instance.
+ * Firebase configuration.
  *
- * This file centralizes the Firestore connection using React Native Firebase.
+ * This file centralizes Firebase setup using the modular React Native Firebase API.
  * The native Firebase configuration is loaded from android/app/google-services.json.
  */
-export const database = firestore();
 
 /**
  * Collection names used across the app.
@@ -16,5 +13,3 @@ export const collections = {
   users: 'users',
   trips: 'trips',
 };
-
-export default database;
