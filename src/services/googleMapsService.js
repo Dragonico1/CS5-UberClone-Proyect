@@ -11,7 +11,7 @@
  * For academic purposes, this key can be stored here or in an environment file.
  */
 
-const GOOGLE_MAPS_API_KEY = '';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDSNa_41xcp_8gofq5TVApvAG_nTt5gXLo';
 
 const GOOGLE_MAPS_BASE_URL = 'https://maps.googleapis.com/maps/api';
 

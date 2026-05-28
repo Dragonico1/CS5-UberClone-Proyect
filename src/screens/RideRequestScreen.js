@@ -341,24 +341,20 @@ const RideRequestScreen = ({ navigation }) => {
 
           {placePredictions.length > 0 ? (
             <View style={styles.predictionsContainer}>
-              <FlatList
-                data={placePredictions}
-                keyExtractor={(item) => item.place_id}
-                keyboardShouldPersistTaps="handled"
-                renderItem={({ item }) => (
-                  <Pressable
-                    style={styles.predictionItem}
-                    onPress={() => handleSelectPlace(item)}
-                  >
-                    <Text style={styles.predictionMainText}>
-                      {item.structured_formatting?.main_text || item.description}
-                    </Text>
-                    <Text style={styles.predictionSecondaryText}>
-                      {item.structured_formatting?.secondary_text || ''}
-                    </Text>
-                  </Pressable>
-                )}
-              />
+              {placePredictions.map((item) => (
+                <Pressable
+                  key={item.place_id}
+                  style={styles.predictionItem}
+                  onPress={() => handleSelectPlace(item)}
+                >
+                  <Text style={styles.predictionMainText}>
+                    {item.structured_formatting?.main_text || item.description}
+                  </Text>
+                  <Text style={styles.predictionSecondaryText}>
+                    {item.structured_formatting?.secondary_text || ''}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
           ) : null}
         </View>
