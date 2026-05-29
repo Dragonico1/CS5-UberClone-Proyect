@@ -336,79 +336,20 @@ const RealTimeTrackingScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  header: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.md,
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: SPACING.xs,
-  },
-  subtitle: {
-    color: COLORS.mutedText,
-    fontSize: 15,
-  },
-  mapContainer: {
-    height: 300,
-    marginHorizontal: SPACING.lg,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  map: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  statusCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.md,
-  },
-  statusLabel: {
-    color: COLORS.mutedText,
-    fontSize: 13,
-    marginBottom: SPACING.xs,
-  },
-  statusValue: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '800',
-    textTransform: 'capitalize',
-  },
-  driverStatus: {
-    color: COLORS.mutedText,
-    fontSize: 14,
-    marginTop: SPACING.sm,
-  },
-  driverMarker: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-  },
-  driverIcon: {
-    fontSize: 24,
-  },
+  screen:        { flex: 1, backgroundColor: COLORS.background },
+  scrollContent: { flexGrow: 1 },
+  header:        { padding: SPACING.lg, paddingBottom: SPACING.md },
+  title:         { color: COLORS.text, fontSize: 28, fontWeight: '900', marginBottom: SPACING.xs },
+  subtitle:      { color: COLORS.mutedText, fontSize: 15 },
+  mapContainer:  { height: 300, marginHorizontal: SPACING.lg, borderRadius: RADIUS.lg, overflow: 'hidden', backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  map:           { flex: 1 },
+  content:       { padding: SPACING.lg },
+  statusCard:    { backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.md },
+  statusLabel:   { color: COLORS.mutedText, fontSize: 13, marginBottom: SPACING.xs },
+  statusValue:   { color: COLORS.text, fontSize: 18, fontWeight: '800', textTransform: 'capitalize' },
+  driverStatus:  { color: COLORS.mutedText, fontSize: 14, marginTop: SPACING.sm },
+  driverMarker:  { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLORS.secondary },
+  driverIcon:    { fontSize: 24 },
 });
 
 export default RealTimeTrackingScreen;

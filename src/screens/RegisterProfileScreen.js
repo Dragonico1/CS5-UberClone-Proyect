@@ -187,6 +187,7 @@ const RegisterProfileScreen = ({ navigation, route }) => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={true}
       >
         <Text style={styles.title}>
           {isEditing ? t('profileTitle') : 'Crear cuenta'}
@@ -300,72 +301,18 @@ const RegisterProfileScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: SPACING.xs,
-  },
-  subtitle: {
-    color: COLORS.mutedText,
-    fontSize: 15,
-    marginBottom: SPACING.lg,
-  },
-  messageBox: {
-    backgroundColor: '#E8F5E9',
-    borderWidth: 1,
-    borderColor: COLORS.success,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  messageText: {
-    color: COLORS.success,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  imageSection: {
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  imageContainer: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: COLORS.surface,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginBottom: SPACING.md,
-  },
-  imageContainerError: {
-    borderColor: COLORS.error,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  imagePlaceholder: {
-    color: COLORS.secondary,
-    fontSize: 42,
-    fontWeight: '300',
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: 12,
-    marginTop: SPACING.xs,
-    textAlign: 'center',
-  },
+  screen:               { flex: 1, backgroundColor: COLORS.background },
+  scrollContent:        { padding: SPACING.lg, paddingBottom: SPACING.xxl },
+  title:                { color: COLORS.text, fontSize: 28, fontWeight: '900', marginBottom: SPACING.xs },
+  subtitle:             { color: COLORS.mutedText, fontSize: 15, marginBottom: SPACING.lg },
+  messageBox:           { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: COLORS.success, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.md },
+  messageText:          { color: COLORS.success, fontSize: 14, fontWeight: '600' },
+  imageSection:         { alignItems: 'center', marginBottom: SPACING.lg },
+  imageContainer:       { width: 130, height: 130, borderRadius: 65, backgroundColor: COLORS.surface, borderWidth: 2, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', marginBottom: SPACING.md },
+  imageContainerError:  { borderColor: COLORS.error },
+  profileImage:         { width: '100%', height: '100%' },
+  imagePlaceholder:     { color: COLORS.secondary, fontSize: 42, fontWeight: '300' },
+  errorText:            { color: COLORS.error, fontSize: 12, marginTop: SPACING.xs, textAlign: 'center' },
 });
 
 export default RegisterProfileScreen;

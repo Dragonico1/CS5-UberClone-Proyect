@@ -390,103 +390,23 @@ const RideRequestScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: SPACING.xs,
-  },
-  subtitle: {
-    color: COLORS.mutedText,
-    fontSize: 15,
-    marginBottom: SPACING.lg,
-  },
-  mapContainer: {
-    height: 280,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-    backgroundColor: COLORS.surface,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  map: {
-    flex: 1,
-  },
-  searchContainer: {
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  section: {
-    marginTop: SPACING.md,
-  },
-  sectionTitle: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: SPACING.md,
-  },
-  searchInput: {
-    minHeight: 50,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    color: COLORS.text,
-    fontSize: 15,
-  },
-  helperText: {
-    color: COLORS.mutedText,
-    fontSize: 13,
-    marginTop: SPACING.sm,
-  },
-  predictionsContainer: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginTop: SPACING.sm,
-    maxHeight: 220,
-    overflow: 'hidden',
-  },
-  predictionItem: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  predictionMainText: {
-    color: COLORS.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  predictionSecondaryText: {
-    color: COLORS.mutedText,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  errorBox: {
-    backgroundColor: '#FFEBEE',
-    borderColor: COLORS.error,
-    borderWidth: 1,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginVertical: SPACING.md,
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: 13,
-    fontWeight: '600',
-  },
+  screen:                  { flex: 1, backgroundColor: COLORS.background },
+  scrollContent:           { padding: SPACING.lg, paddingBottom: SPACING.xxl },
+  title:                   { color: COLORS.text, fontSize: 28, fontWeight: '900', marginBottom: SPACING.xs },
+  subtitle:                { color: COLORS.mutedText, fontSize: 15, marginBottom: SPACING.lg },
+  mapContainer:            { height: 280, borderRadius: RADIUS.lg, overflow: 'hidden', backgroundColor: COLORS.surface, marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border },
+  map:                     { flex: 1 },
+  searchContainer:         { marginTop: SPACING.md, marginBottom: SPACING.md },
+  section:                 { marginTop: SPACING.md },
+  sectionTitle:            { color: COLORS.text, fontSize: 18, fontWeight: '800', marginBottom: SPACING.md },
+  searchInput:             { minHeight: 50, backgroundColor: COLORS.surface, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: SPACING.md, color: COLORS.text, fontSize: 15 },
+  helperText:              { color: COLORS.mutedText, fontSize: 13, marginTop: SPACING.sm },
+  predictionsContainer:    { backgroundColor: COLORS.surface, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, marginTop: SPACING.sm, maxHeight: 220, overflow: 'hidden' },
+  predictionItem:          { paddingHorizontal: SPACING.md, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  predictionMainText:      { color: COLORS.text, fontSize: 15, fontWeight: '700' },
+  predictionSecondaryText: { color: COLORS.mutedText, fontSize: 13, marginTop: 2 },
+  errorBox:                { backgroundColor: '#FFEBEE', borderColor: COLORS.error, borderWidth: 1, borderRadius: RADIUS.md, padding: SPACING.md, marginVertical: SPACING.md },
+  errorText:               { color: COLORS.error, fontSize: 13, fontWeight: '600' },
 });
 
 export default RideRequestScreen;

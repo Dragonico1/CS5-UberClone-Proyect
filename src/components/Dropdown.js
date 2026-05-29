@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import {
-  FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -56,35 +56,30 @@ const Dropdown = ({
           styles.dropdownButton,
           error ? styles.dropdownButtonError : null,
         ]}
-        onPress={() => setIsOpen((previousValue) => !previousValue)}
+        onPress={() => setIsOpen((prev) => !prev)}
       >
-        <Text
-          style={[
-            styles.dropdownText,
-            !selectedOption && styles.placeholderText,
-          ]}
-        >
+        <Text style={[styles.dropdownText, !selectedOption && styles.placeholderText]}>
           {selectedOption ? selectedOption.label : placeholder}
         </Text>
-
         <Text style={styles.arrow}>{isOpen ? '▲' : '▼'}</Text>
       </Pressable>
 
       {isOpen ? (
-        <View style={styles.optionsContainer}>
-          <FlatList
-            data={options}
-            keyExtractor={(item) => item.value}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.optionItem}
-                onPress={() => handleSelectOption(item)}
-              >
-                <Text style={styles.optionText}>{item.label}</Text>
-              </Pressable>
-            )}
-          />
-        </View>
+        <ScrollView
+          style={styles.optionsContainer}
+          nestedScrollEnabled={true}
+          keyboardShouldPersistTaps="handled"
+        >
+          {options.map((item) => (
+            <Pressable
+              key={item.value}
+              style={styles.optionItem}
+              onPress={() => handleSelectOption(item)}
+            >
+              <Text style={styles.optionText}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
       ) : null}
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -93,65 +88,17 @@ const Dropdown = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: SPACING.md,
-    zIndex: 10,
-  },
-  label: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  dropdownButton: {
-    minHeight: 50,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dropdownButtonError: {
-    borderColor: COLORS.error,
-  },
-  dropdownText: {
-    color: COLORS.text,
-    fontSize: 15,
-  },
-  placeholderText: {
-    color: COLORS.mutedText,
-  },
-  arrow: {
-    color: COLORS.mutedText,
-    fontSize: 12,
-    marginLeft: SPACING.sm,
-  },
-  optionsContainer: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    marginTop: SPACING.xs,
-    overflow: 'hidden',
-  },
-  optionItem: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  optionText: {
-    color: COLORS.text,
-    fontSize: 15,
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: 12,
-    marginTop: SPACING.xs,
-  },
+  container:            { marginBottom: SPACING.md, zIndex: 10 },
+  label:                { color: COLORS.text, fontSize: 14, fontWeight: '600', marginBottom: SPACING.xs },
+  dropdownButton:       { minHeight: 50, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dropdownButtonError:  { borderColor: COLORS.error },
+  dropdownText:         { color: COLORS.text, fontSize: 15 },
+  placeholderText:      { color: COLORS.mutedText },
+  arrow:                { color: COLORS.mutedText, fontSize: 12, marginLeft: SPACING.sm },
+  optionsContainer:     { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, marginTop: SPACING.xs, maxHeight: 220, overflow: 'hidden' },
+  optionItem:           { paddingHorizontal: SPACING.md, paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  optionText:           { color: COLORS.text, fontSize: 15 },
+  errorText:            { color: COLORS.error, fontSize: 12, marginTop: SPACING.xs },
 });
 
 export default Dropdown;
