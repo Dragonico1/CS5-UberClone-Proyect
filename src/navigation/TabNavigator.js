@@ -1,38 +1,64 @@
 // src/navigation/TabNavigator.js
 
-import React from 'react';
+import React, { useCallback } from 'react';
+import { Alert } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
 
 import RegisterProfileScreen from '../screens/RegisterProfileScreen';
-import RideRequestScreen from '../screens/RideRequestScreen';
-import TripHistoryScreen from '../screens/TripHistoryScreen';
+import RideRequestScreen     from '../screens/RideRequestScreen';
+import TripHistoryScreen     from '../screens/TripHistoryScreen';
 
 import { COLORS } from '../utils/constants';
 
-/**
- * Bottom tab navigator instance.
- *
- * This navigator controls the main app tabs.
- */
+import { logout }          from '../redux/slices/authSlice';
+import { clearUserProfile } from '../redux/slices/userSlice';
+import { clearRide }        from '../redux/slices/rideSlice';
+import { clearPayment }     from '../redux/slices/paymentSlice';
+import { clearTripHistory } from '../redux/slices/tripHistorySlice';
+
 const Tab = createBottomTabNavigator();
 
 /**
  * Tab navigator.
  *
- * This navigator contains the main sections of the app:
- * - Profile
- * - Ride request
- * - Trip history
+ * Contains the main sections of the app after authentication:
+ *  - Profile     → RegisterProfileScreen in edit mode (isEditing: true)
+ *  - Ride        → RideRequestScreen
+ *  - History     → TripHistoryScreen
  *
- * useSafeAreaInsets is used to calculate the real bottom inset
- * (home indicator on iPhone, navigation bar on Android) so the
- * tab bar height never overlaps system UI elements.
- *
- * @returns {React.ReactElement} Bottom tab navigator.
+ * The logout button lives in the Profile tab header so it's
+ * always accessible without cluttering the main UI.
  */
 const TabNavigator = () => {
-  const insets = useSafeAreaInsets();
+  const insets   = useSafeAreaInsets();
+  const dispatch = useDispatch();
+
+  /**
+   * Clears all Redux slices and returns to AuthNavigator.
+   */
+  const handleLogout = useCallback(() => {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cerrar sesión',
+          style: 'destructive',
+          onPress: () => {
+            dispatch(clearTripHistory());
+            dispatch(clearPayment());
+            dispatch(clearRide());
+            dispatch(clearUserProfile());
+            dispatch(logout());
+            // AppNavigator switches to AuthNavigator automatically
+          },
+        },
+      ],
+    );
+  }, [dispatch]);
 
   return (
     <Tab.Navigator
@@ -58,17 +84,27 @@ const TabNavigator = () => {
         name="Profile"
         component={RegisterProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color }) => null,
+          tabBarLabel: 'Perfil',
+          tabBarIcon: () => null,
+          // Show header only on Profile tab so logout button is visible
+          headerShown: true,
+          headerTitle: 'Mi perfil',
+          headerStyle: { backgroundColor: COLORS.surface },
+          headerTintColor: COLORS.text,
+          headerTitleStyle: { fontWeight: '800' },
+          headerRight: () => (
+            <LogoutButton onPress={handleLogout} />
+          ),
         }}
+        initialParams={{ isEditing: true }}
       />
 
       <Tab.Screen
         name="RideRequest"
         component={RideRequestScreen}
         options={{
-          tabBarLabel: 'Ride',
-          tabBarIcon: ({ color }) => null,
+          tabBarLabel: 'Viaje',
+          tabBarIcon: () => null,
         }}
       />
 
@@ -76,12 +112,42 @@ const TabNavigator = () => {
         name="TripHistory"
         component={TripHistoryScreen}
         options={{
-          tabBarLabel: 'History',
-          tabBarIcon: ({ color }) => null,
+          tabBarLabel: 'Historial',
+          tabBarIcon: () => null,
         }}
       />
     </Tab.Navigator>
   );
 };
+
+// ─── Logout button component ──────────────────────────────────────────────────
+
+import { Pressable, Text, StyleSheet } from 'react-native';
+import { SPACING } from '../utils/constants';
+
+const LogoutButton = ({ onPress }) => (
+  <Pressable
+    onPress={onPress}
+    style={({ pressed }) => [
+      styles.logoutBtn,
+      pressed && { opacity: 0.6 },
+    ]}
+  >
+    <Text style={styles.logoutText}>Salir</Text>
+  </Pressable>
+);
+
+const styles = StyleSheet.create({
+  logoutBtn: {
+    marginRight: SPACING.md,
+    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+  },
+  logoutText: {
+    color: COLORS.error,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+});
 
 export default TabNavigator;

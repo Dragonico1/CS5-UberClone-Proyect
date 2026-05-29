@@ -6,6 +6,13 @@ import Geolocation from '@react-native-community/geolocation';
 
 import { DEFAULT_MAP_REGION } from './constants';
 
+// Agrega esta línea antes de cualquier uso de Geolocation
+Geolocation.setRNConfiguration({
+  skipPermissionRequests: false,
+  authorizationLevel: 'whenInUse',
+  locationProvider: 'auto',
+});
+
 /**
  * Custom hook for getting the user's current location.
  *

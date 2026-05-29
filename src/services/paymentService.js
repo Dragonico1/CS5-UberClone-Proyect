@@ -3,214 +3,127 @@
 /**
  * Payment service.
  *
- * This file centralizes payment operations for Stripe and Mercado Pago.
+ * Centralizes payment operations for Mercado Pago.
  *
- * IMPORTANT:
- * In a real production app, secret keys must never be stored in React Native.
- * The mobile app should call a secure backend, and the backend should talk
- * to Stripe or Mercado Pago.
- *
- * This academic version uses mock payments until a real backend is available.
+ * SECURITY NOTE:
+ * Secret keys must NEVER be stored in the React Native app.
+ * The mobile app calls a secure backend, and the backend communicates
+ * with Mercado Pago using server-side secrets.
  */
 
-const USE_MOCK_PAYMENTS = true;
-
-const PAYMENT_BACKEND_BASE_URL = 'https://your-backend-url.com/api/payments';
+// ─── Configuration ────────────────────────────────────────────────────────────
 
 /**
- * Simulates a successful payment response.
- *
- * @param {string} provider - Payment provider name.
- * @param {Object} paymentData - Payment information.
- * @returns {Promise<Object>} Simulated payment response.
+ * Set to `false` once your backend is deployed.
+ * When `true` all payments are simulated locally (no network calls).
  */
-const createMockPaymentResponse = async (provider, paymentData) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: `mock-${provider}-${Date.now()}`,
-        transactionId: `mock-${provider}-${Date.now()}`,
-        provider,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        status: 'approved',
-        message: 'Mock payment approved successfully.',
-      });
-    }, 1200);
-  });
-};
+const USE_MOCK_PAYMENTS = false;
+
+import { PAYMENT_BACKEND_BASE_URL } from '@env';
+
+
+// ─── Internal helpers ─────────────────────────────────────────────────────────
 
 /**
  * Safely parses a fetch response as JSON.
+ * Prevents the app from crashing when the backend returns HTML on errors.
  *
- * This prevents the app from crashing when the backend returns HTML instead of JSON.
- *
- * @param {Response} response - Fetch response.
- * @returns {Promise<Object>} Parsed response data.
+ * @param {Response} response - Fetch response object.
+ * @returns {Promise<Object>} Parsed JSON body.
+ * @throws {Error} When the body is not valid JSON.
  */
 const parseJsonResponse = async (response) => {
   const text = await response.text();
-
   try {
     return JSON.parse(text);
-  } catch (error) {
+  } catch {
     throw new Error(
-      `Server did not return valid JSON. Response starts with: ${text.slice(0, 40)}`,
+      `Server did not return valid JSON. Response starts with: ${text.slice(0, 60)}`,
     );
   }
 };
 
 /**
- * Creates a Stripe payment intent through a secure backend.
+ * Validates the common fields required by every payment call.
  *
- * @param {Object} paymentData - Payment information.
- * @returns {Promise<Object>} Stripe payment intent response.
+ * @param {Object} paymentData - Payment payload to validate.
+ * @throws {Error} On missing or invalid fields.
  */
-export const createStripePaymentIntent = async (paymentData) => {
-  try {
-    if (!paymentData) {
-      throw new Error('Payment data is required.');
-    }
+const validatePaymentData = (paymentData) => {
+  if (!paymentData) throw new Error('Payment data is required.');
 
-    const { amount, currency, userId, description } = paymentData;
+  const { amount, currency, userId } = paymentData;
 
-    if (!amount || amount <= 0) {
-      throw new Error('A valid payment amount is required.');
-    }
-
-    if (!currency) {
-      throw new Error('Currency is required.');
-    }
-
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
-
-    if (USE_MOCK_PAYMENTS) {
-      return createMockPaymentResponse('stripe', paymentData);
-    }
-
-    const response = await fetch(`${PAYMENT_BACKEND_BASE_URL}/stripe/intent`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount,
-        currency,
-        userId,
-        description,
-      }),
-    });
-
-    const data = await parseJsonResponse(response);
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to create Stripe payment intent.');
-    }
-
-    return data;
-  } catch (error) {
-    throw new Error(error.message || 'Stripe payment failed.');
-  }
+  if (!amount || amount <= 0) throw new Error('A valid payment amount is required.');
+  if (!currency)              throw new Error('Currency is required.');
+  if (!userId)                throw new Error('User ID is required.');
 };
 
 /**
- * Confirms a Stripe payment.
+ * Simulates a successful payment response (used when USE_MOCK_PAYMENTS = true).
  *
- * @param {Object} confirmationData - Confirmation information.
- * @returns {Promise<Object>} Payment confirmation response.
+ * @param {string} provider   - Provider name ('mercado_pago').
+ * @param {Object} paymentData - Payment payload.
+ * @returns {Promise<Object>} Simulated payment response.
  */
-export const confirmStripePayment = async (confirmationData) => {
-  try {
-    if (!confirmationData) {
-      throw new Error('Confirmation data is required.');
-    }
+const createMockPaymentResponse = (provider, paymentData) =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      const id = `mock-${provider}-${Date.now()}`;
+      resolve({
+        id,
+        transactionId: id,
+        provider,
+        amount:   paymentData.amount,
+        currency: paymentData.currency,
+        status:   'approved',
+        message:  'Mock payment approved successfully.',
+      });
+    }, 1200);
+  });
 
-    const { transactionId, userId } = confirmationData;
 
-    if (!transactionId) {
-      throw new Error('Transaction ID is required.');
-    }
-
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
-
-    if (USE_MOCK_PAYMENTS) {
-      return {
-        transactionId,
-        userId,
-        status: 'confirmed',
-        message: 'Mock Stripe payment confirmed.',
-      };
-    }
-
-    const response = await fetch(`${PAYMENT_BACKEND_BASE_URL}/stripe/confirm`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        transactionId,
-        userId,
-      }),
-    });
-
-    const data = await parseJsonResponse(response);
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to confirm Stripe payment.');
-    }
-
-    return data;
-  } catch (error) {
-    throw new Error(error.message || 'Stripe confirmation failed.');
-  }
-};
+// ─── Mercado Pago ─────────────────────────────────────────────────────────────
 
 /**
- * Creates a Mercado Pago preference through a secure backend.
+ * Creates a Mercado Pago preference via your secure backend.
  *
- * @param {Object} paymentData - Payment information.
- * @returns {Promise<Object>} Mercado Pago preference response.
+ * Real flow:
+ *   1. App calls  POST /api/payments/mercado-pago/preference  (your backend).
+ *   2. Backend uses the MP Access Token to create the preference with the MP API.
+ *   3. Backend returns { preferenceId, initPoint, transactionId }.
+ *   4. App opens `initPoint` in a WebView so the user can pay.
+ *
+ * MP Preference API reference:
+ *   https://www.mercadopago.com.co/developers/en/reference/preferences/_checkout_preferences/post
+ *
+ * @param {Object} paymentData
+ * @param {number} paymentData.amount       - Amount in the smallest currency unit.
+ * @param {string} paymentData.currency     - ISO 4217 code, e.g. 'COP'.
+ * @param {string} paymentData.userId       - Internal user identifier.
+ * @param {string} [paymentData.description] - Item description shown to the payer.
+ * @returns {Promise<Object>} Preference response: { id, transactionId, initPoint, ... }
  */
 export const createMercadoPagoPreference = async (paymentData) => {
   try {
-    if (!paymentData) {
-      throw new Error('Payment data is required.');
-    }
+    validatePaymentData(paymentData);
 
-    const { amount, currency, userId, description } = paymentData;
-
-    if (!amount || amount <= 0) {
-      throw new Error('A valid payment amount is required.');
-    }
-
-    if (!currency) {
-      throw new Error('Currency is required.');
-    }
-
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
-
+    // ── Mock mode ────────────────────────────────────────────────────────────
     if (USE_MOCK_PAYMENTS) {
       return createMockPaymentResponse('mercado_pago', paymentData);
     }
 
-    const response = await fetch(`${PAYMENT_BACKEND_BASE_URL}/mercado-pago/preference`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // ── Real mode ────────────────────────────────────────────────────────────
+    const { amount, currency, userId, description } = paymentData;
+
+    const response = await fetch(
+      `${PAYMENT_BACKEND_BASE_URL}/mercado-pago/preference`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, currency, userId, description }),
       },
-      body: JSON.stringify({
-        amount,
-        currency,
-        userId,
-        description,
-      }),
-    });
+    );
 
     const data = await parseJsonResponse(response);
 
@@ -218,6 +131,15 @@ export const createMercadoPagoPreference = async (paymentData) => {
       throw new Error(data.message || 'Failed to create Mercado Pago preference.');
     }
 
+    /**
+     * Expected backend response shape:
+     * {
+     *   id:            string,   // MP preference ID
+     *   transactionId: string,   // your internal transaction ID
+     *   initPoint:     string,   // URL to redirect the user for payment
+     *   sandboxInitPoint: string // same but for sandbox
+     * }
+     */
     return data;
   } catch (error) {
     throw new Error(error.message || 'Mercado Pago payment failed.');
@@ -225,46 +147,47 @@ export const createMercadoPagoPreference = async (paymentData) => {
 };
 
 /**
- * Confirms a Mercado Pago payment through the backend.
+ * Confirms / validates a Mercado Pago payment via your secure backend.
  *
- * @param {Object} confirmationData - Confirmation information.
- * @returns {Promise<Object>} Payment confirmation response.
+ * Call this after the user returns from the MP checkout to verify the
+ * payment status using the backend (never trust client-side status alone).
+ *
+ * MP Payment status reference:
+ *   https://www.mercadopago.com.co/developers/en/docs/checkout-pro/integration-test/test-payment-flow
+ *
+ * @param {Object} confirmationData
+ * @param {string} confirmationData.paymentId    - MP payment_id returned by the checkout redirect.
+ * @param {string} confirmationData.userId       - Internal user identifier.
+ * @param {string} [confirmationData.preferenceId] - Optional MP preference ID for extra validation.
+ * @returns {Promise<Object>} Confirmation result: { paymentId, status, ... }
  */
 export const confirmMercadoPagoPayment = async (confirmationData) => {
   try {
-    if (!confirmationData) {
-      throw new Error('Confirmation data is required.');
-    }
+    if (!confirmationData)            throw new Error('Confirmation data is required.');
+    if (!confirmationData.paymentId)  throw new Error('Payment ID is required.');
+    if (!confirmationData.userId)     throw new Error('User ID is required.');
 
-    const { paymentId, userId } = confirmationData;
-
-    if (!paymentId) {
-      throw new Error('Payment ID is required.');
-    }
-
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
-
+    // ── Mock mode ────────────────────────────────────────────────────────────
     if (USE_MOCK_PAYMENTS) {
       return {
-        paymentId,
-        userId,
-        status: 'confirmed',
-        message: 'Mock Mercado Pago payment confirmed.',
+        paymentId: confirmationData.paymentId,
+        userId:    confirmationData.userId,
+        status:    'approved',
+        message:   'Mock Mercado Pago payment confirmed.',
       };
     }
 
-    const response = await fetch(`${PAYMENT_BACKEND_BASE_URL}/mercado-pago/confirm`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // ── Real mode ────────────────────────────────────────────────────────────
+    const { paymentId, userId, preferenceId } = confirmationData;
+
+    const response = await fetch(
+      `${PAYMENT_BACKEND_BASE_URL}/mercado-pago/confirm`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId, userId, preferenceId }),
       },
-      body: JSON.stringify({
-        paymentId,
-        userId,
-      }),
-    });
+    );
 
     const data = await parseJsonResponse(response);
 

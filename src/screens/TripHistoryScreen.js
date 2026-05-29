@@ -16,12 +16,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
-import AppButton from '../components/AppButton';
+import AppButton     from '../components/AppButton';
 import LoadingOverlay from '../components/LoadingOverlay';
 
 import {
   COLORS,
-  DEFAULT_USER_ID,
   RADIUS,
   SPACING,
 } from '../utils/constants';
@@ -37,15 +36,19 @@ import {
   setSelectedTrip,
 } from '../redux/slices/tripHistorySlice';
 
+import { clearRide } from '../redux/slices/rideSlice';
+import { clearPayment } from '../redux/slices/paymentSlice';
+
 /**
  * Trip history screen.
  *
- * This screen displays the user's completed trips loaded from Firestore.
- *
- * @returns {React.ReactElement} Trip history screen.
+ * Loads trips from Firestore using the authenticated userId from authSlice.
  */
 const TripHistoryScreen = () => {
   const dispatch = useDispatch();
+
+  // Read the real userId from auth slice — no more hardcoded ID
+  const userId = useSelector((state) => state.auth.userId);
 
   const {
     trips,
@@ -54,166 +57,86 @@ const TripHistoryScreen = () => {
     error,
   } = useSelector((state) => state.tripHistory);
 
-  /**
-   * Memoized total amount spent.
-   *
-   * This value is recalculated only when the trip list changes.
-   */
-  const totalSpent = useMemo(() => {
-    return trips.reduce((total, trip) => {
-      return total + Number(trip.fare || 0);
-    }, 0);
-  }, [trips]);
-
-  /**
-   * Memoized total completed trips.
-   */
-  const totalTrips = useMemo(() => {
-    return trips.length;
-  }, [trips]);
-
-  /**
-   * Loads trip history from Firestore.
-   */
-  const loadTripHistory = useCallback(async () => {
-    try {
-      dispatch(fetchTripsStart());
-
-      const userTrips = await getTripsByUser(DEFAULT_USER_ID);
-
-      dispatch(fetchTripsSuccess(userTrips));
-    } catch (requestError) {
-      dispatch(fetchTripsFailure(
-        requestError.message || 'Failed to load trip history.',
-      ));
-    }
-  }, [dispatch]);
-
-  /**
-   * Loads trip history when the screen is mounted.
-   */
-  useEffect(() => {
-    loadTripHistory();
-  }, [loadTripHistory]);
-
-  /**
-   * Shows errors from Redux state.
-   */
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Trip history error', error);
-    }
-  }, [error]);
-
-  /**
-   * Handles pressing one trip item.
-   *
-   * @param {Object} trip - Selected trip.
-   */
-  const handleSelectTrip = useCallback(
-    (trip) => {
-      dispatch(setSelectedTrip(trip));
-
-      Alert.alert(
-        'Trip details',
-        `Destination: ${trip.destination?.name || 'Not available'}\nFare: ${formatFare(trip.fare)}\nDistance: ${trip.distanceText || 'Not available'}\nDuration: ${trip.durationText || 'Not available'}`,
-      );
-    },
-    [dispatch],
+  const totalSpent = useMemo(
+    () => trips.reduce((sum, trip) => sum + Number(trip.fare || 0), 0),
+    [trips],
   );
 
   /**
-   * Formats a Firestore ISO date for display.
-   *
-   * @param {string|null} dateValue - ISO date value.
-   * @returns {string} Formatted date.
+   * Al entrar al historial el viaje ya fue completado y pagado,
+   * así que limpiamos ride y payment para que la próxima solicitud
+   * empiece desde cero.
    */
-  const formatTripDate = (dateValue) => {
-    if (!dateValue) {
-      return 'Date not available';
-    }
+  useEffect(() => {
+    dispatch(clearRide());
+    dispatch(clearPayment());
+  }, [dispatch]);
 
+  const loadTripHistory = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      dispatch(fetchTripsStart());
+      const userTrips = await getTripsByUser(userId);
+      dispatch(fetchTripsSuccess(userTrips));
+    } catch (err) {
+      dispatch(fetchTripsFailure(err.message || 'Error cargando historial.'));
+    }
+  }, [dispatch, userId]);
+
+  useEffect(() => { loadTripHistory(); }, [loadTripHistory]);
+
+  useEffect(() => {
+    if (error) Alert.alert('Error en historial', error);
+  }, [error]);
+
+  const handleSelectTrip = useCallback((trip) => {
+    dispatch(setSelectedTrip(trip));
+    Alert.alert(
+      'Detalles del viaje',
+      `Destino: ${trip.destination?.name || 'N/A'}\nTarifa: ${formatFare(trip.fare)}\nDistancia: ${trip.distanceText || 'N/A'}\nDuración: ${trip.durationText || 'N/A'}`,
+    );
+  }, [dispatch]);
+
+  const formatTripDate = (dateValue) => {
+    if (!dateValue) return 'Fecha no disponible';
     return new Date(dateValue).toLocaleString('es-CO', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+      year: 'numeric', month: 'short', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
     });
   };
 
-  /**
-   * Renders one trip card.
-   *
-   * @param {Object} params - FlatList render params.
-   * @param {Object} params.item - Trip item.
-   * @returns {React.ReactElement} Trip card.
-   */
   const renderTripItem = ({ item }) => {
     const vehicleCategory = getVehicleCategoryById(item.vehicleCategory);
     const isSelected = selectedTrip?.id === item.id;
 
     return (
-      <View
-        style={[
-          styles.tripCard,
-          isSelected && styles.selectedTripCard,
-        ]}
-      >
+      <View style={[styles.tripCard, isSelected && styles.selectedTripCard]}>
         <Text style={styles.tripDestination}>
-          {item.destination?.name || 'Unknown destination'}
+          {item.destination?.name || 'Destino desconocido'}
         </Text>
-
         <Text style={styles.tripAddress}>
-          {item.destination?.address || 'Address not available'}
+          {item.destination?.address || 'Dirección no disponible'}
         </Text>
 
         <View style={styles.tripInfoGrid}>
-          <View style={styles.tripInfoItem}>
-            <Text style={styles.tripInfoLabel}>Cost</Text>
-            <Text style={styles.tripInfoValue}>
-              {formatFare(item.fare)}
-            </Text>
-          </View>
-
-          <View style={styles.tripInfoItem}>
-            <Text style={styles.tripInfoLabel}>Date</Text>
-            <Text style={styles.tripInfoValue}>
-              {formatTripDate(item.createdAt)}
-            </Text>
-          </View>
-
-          <View style={styles.tripInfoItem}>
-            <Text style={styles.tripInfoLabel}>Distance</Text>
-            <Text style={styles.tripInfoValue}>
-              {item.distanceText || 'N/A'}
-            </Text>
-          </View>
-
-          <View style={styles.tripInfoItem}>
-            <Text style={styles.tripInfoLabel}>Duration</Text>
-            <Text style={styles.tripInfoValue}>
-              {item.durationText || 'N/A'}
-            </Text>
-          </View>
-
-          <View style={styles.tripInfoItem}>
-            <Text style={styles.tripInfoLabel}>Vehicle</Text>
-            <Text style={styles.tripInfoValue}>
-              {vehicleCategory.label}
-            </Text>
-          </View>
-
-          <View style={styles.tripInfoItem}>
-            <Text style={styles.tripInfoLabel}>Payment</Text>
-            <Text style={styles.tripInfoValue}>
-              {item.paymentProvider || 'N/A'}
-            </Text>
-          </View>
+          {[
+            { label: 'Costo',     value: formatFare(item.fare) },
+            { label: 'Fecha',     value: formatTripDate(item.createdAt) },
+            { label: 'Distancia', value: item.distanceText || 'N/A' },
+            { label: 'Duración',  value: item.durationText || 'N/A' },
+            { label: 'Vehículo',  value: vehicleCategory.label },
+            { label: 'Pago',      value: item.paymentProvider || 'N/A' },
+          ].map(({ label, value }) => (
+            <View key={label} style={styles.tripInfoItem}>
+              <Text style={styles.tripInfoLabel}>{label}</Text>
+              <Text style={styles.tripInfoValue}>{value}</Text>
+            </View>
+          ))}
         </View>
 
         <AppButton
-          title="View details"
+          title="Ver detalles"
           onPress={() => handleSelectTrip(item)}
           variant="secondary"
         />
@@ -224,35 +147,29 @@ const TripHistoryScreen = () => {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <Text style={styles.title}>Trip history</Text>
-        <Text style={styles.subtitle}>
-          Review your completed rides and payment details.
-        </Text>
+        <Text style={styles.title}>Historial</Text>
+        <Text style={styles.subtitle}>Tus viajes completados.</Text>
       </View>
 
       <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Total trips</Text>
-          <Text style={styles.summaryValue}>{totalTrips}</Text>
+          <Text style={styles.summaryLabel}>Total viajes</Text>
+          <Text style={styles.summaryValue}>{trips.length}</Text>
         </View>
-
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Total spent</Text>
-          <Text style={styles.summaryValue}>
-            {formatFare(totalSpent)}
-          </Text>
+          <Text style={styles.summaryLabel}>Total gastado</Text>
+          <Text style={styles.summaryValue}>{formatFare(totalSpent)}</Text>
         </View>
       </View>
 
       {trips.length === 0 && !isLoading ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>No trips found</Text>
+          <Text style={styles.emptyTitle}>Sin viajes</Text>
           <Text style={styles.emptyText}>
-            Completed trips will appear here after payment.
+            Los viajes completados aparecerán aquí después del pago.
           </Text>
-
           <AppButton
-            title="Reload history"
+            title="Recargar historial"
             onPress={loadTripHistory}
             variant="secondary"
           />
@@ -264,131 +181,37 @@ const TripHistoryScreen = () => {
           renderItem={renderTripItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={loadTripHistory}
-            />
+            <RefreshControl refreshing={isLoading} onRefresh={loadTripHistory} />
           }
         />
       )}
 
-      <LoadingOverlay
-        visible={isLoading}
-        message="Loading trip history..."
-      />
+      <LoadingOverlay visible={isLoading} message="Cargando historial..." />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.md,
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: SPACING.xs,
-  },
-  subtitle: {
-    color: COLORS.mutedText,
-    fontSize: 15,
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginRight: SPACING.sm,
-  },
-  summaryLabel: {
-    color: COLORS.mutedText,
-    fontSize: 13,
-    marginBottom: SPACING.xs,
-  },
-  summaryValue: {
-    color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '900',
-  },
-  listContent: {
-    padding: SPACING.lg,
-    paddingTop: 0,
-    paddingBottom: SPACING.xxl,
-  },
-  tripCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.md,
-  },
-  selectedTripCard: {
-    borderColor: COLORS.secondary,
-    backgroundColor: '#EEF6FF',
-  },
-  tripDestination: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: SPACING.xs,
-  },
-  tripAddress: {
-    color: COLORS.mutedText,
-    fontSize: 13,
-    marginBottom: SPACING.md,
-  },
-  tripInfoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: SPACING.md,
-  },
-  tripInfoItem: {
-    width: '50%',
-    marginBottom: SPACING.md,
-  },
-  tripInfoLabel: {
-    color: COLORS.mutedText,
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  tripInfoValue: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '700',
-    paddingRight: SPACING.sm,
-  },
-  emptyContainer: {
-    flex: 1,
-    padding: SPACING.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyTitle: {
-    color: COLORS.text,
-    fontSize: 22,
-    fontWeight: '900',
-    marginBottom: SPACING.sm,
-  },
-  emptyText: {
-    color: COLORS.mutedText,
-    fontSize: 15,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
+  screen:            { flex: 1, backgroundColor: COLORS.background },
+  header:            { padding: SPACING.lg, paddingBottom: SPACING.md },
+  title:             { color: COLORS.text, fontSize: 28, fontWeight: '900', marginBottom: SPACING.xs },
+  subtitle:          { color: COLORS.mutedText, fontSize: 15 },
+  summaryContainer:  { flexDirection: 'row', paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
+  summaryCard:       { flex: 1, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm },
+  summaryLabel:      { color: COLORS.mutedText, fontSize: 13, marginBottom: SPACING.xs },
+  summaryValue:      { color: COLORS.text, fontSize: 20, fontWeight: '900' },
+  listContent:       { padding: SPACING.lg, paddingTop: 0, paddingBottom: SPACING.xxl },
+  tripCard:          { backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.md },
+  selectedTripCard:  { borderColor: COLORS.secondary, backgroundColor: '#EEF6FF' },
+  tripDestination:   { color: COLORS.text, fontSize: 18, fontWeight: '900', marginBottom: SPACING.xs },
+  tripAddress:       { color: COLORS.mutedText, fontSize: 13, marginBottom: SPACING.md },
+  tripInfoGrid:      { flexDirection: 'row', flexWrap: 'wrap', marginBottom: SPACING.md },
+  tripInfoItem:      { width: '50%', marginBottom: SPACING.md },
+  tripInfoLabel:     { color: COLORS.mutedText, fontSize: 12, marginBottom: 2 },
+  tripInfoValue:     { color: COLORS.text, fontSize: 14, fontWeight: '700', paddingRight: SPACING.sm },
+  emptyContainer:    { flex: 1, padding: SPACING.lg, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle:        { color: COLORS.text, fontSize: 22, fontWeight: '900', marginBottom: SPACING.sm },
+  emptyText:         { color: COLORS.mutedText, fontSize: 15, textAlign: 'center', marginBottom: SPACING.lg },
 });
 
 export default TripHistoryScreen;

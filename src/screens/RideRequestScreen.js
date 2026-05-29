@@ -89,9 +89,6 @@ const RideRequestScreen = ({ navigation }) => {
 
   /**
    * Memoized map region.
-   *
-   * This prevents the map region from being recalculated on every render
-   * unless the location actually changes.
    */
   const mapRegion = useMemo(() => {
     return locationRegion || DEFAULT_MAP_REGION;
@@ -117,8 +114,6 @@ const RideRequestScreen = ({ navigation }) => {
 
   /**
    * Searches places when the user types a destination.
-   *
-   * @param {string} text - Destination search text.
    */
   const handleDestinationChange = useCallback(async (text) => {
     setDestinationInput(text);
@@ -144,8 +139,6 @@ const RideRequestScreen = ({ navigation }) => {
 
   /**
    * Handles selecting one place from the autocomplete results.
-   *
-   * @param {Object} place - Google place prediction.
    */
   const handleSelectPlace = useCallback(
     async (place) => {
@@ -211,8 +204,6 @@ const RideRequestScreen = ({ navigation }) => {
 
   /**
    * Handles selecting a vehicle category.
-   *
-   * @param {string} categoryId - Selected category ID.
    */
   const handleSelectVehicleCategory = useCallback(
     (categoryId) => {
@@ -285,8 +276,6 @@ const RideRequestScreen = ({ navigation }) => {
             style={styles.map}
             initialRegion={mapRegion}
             region={mapRegion}
-            showsUserLocation
-            showsMyLocationButton
           >
             {ride.origin ? (
               <Marker

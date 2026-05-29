@@ -10,8 +10,6 @@
  *
  * In a real app, this value should come from Firebase Authentication.
  */
-export const DEFAULT_USER_ID = 'demo-user-001';
-
 /**
  * Vehicle categories available in the ride request flow.
  */
@@ -85,11 +83,6 @@ export const LANGUAGE_OPTIONS = [
  * Payment provider options.
  */
 export const PAYMENT_PROVIDERS = [
-  {
-    id: 'stripe',
-    label: 'Stripe',
-    description: 'Pay with credit or debit card.',
-  },
   {
     id: 'mercado_pago',
     label: 'Mercado Pago',

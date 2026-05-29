@@ -1,5 +1,8 @@
+// src/redux/store.js
+
 import { configureStore } from '@reduxjs/toolkit';
 
+import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import rideReducer from './slices/rideSlice';
 import paymentReducer from './slices/paymentSlice';
@@ -8,11 +11,15 @@ import tripHistoryReducer from './slices/tripHistorySlice';
 /**
  * Redux store configuration.
  *
- * This file centralizes the global state of the application.
- * Each reducer controls one specific feature of the app.
+ * auth    — session (userId, isAuthenticated)
+ * user    — profile data (name, phone, email, etc.)
+ * ride    — active ride state
+ * payment — payment flow state
+ * tripHistory — completed trips
  */
 export const store = configureStore({
   reducer: {
+    auth: authReducer,
     user: userReducer,
     ride: rideReducer,
     payment: paymentReducer,
@@ -20,10 +27,6 @@ export const store = configureStore({
   },
 });
 
-/**
- * Optional helper to access the current Redux state structure.
- * Useful for debugging during development.
- */
 export const getAppState = () => store.getState();
 
 export default store;

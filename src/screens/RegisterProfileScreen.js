@@ -24,7 +24,6 @@ import LoadingOverlay from '../components/LoadingOverlay';
 
 import {
   COLORS,
-  DEFAULT_USER_ID,
   GENDER_OPTIONS,
   LANGUAGE_OPTIONS,
   MAX_FULL_NAME_LENGTH,
@@ -43,20 +42,34 @@ import {
   setUserProfile,
 } from '../redux/slices/userSlice';
 
+import { loginSuccess, authStart, authFailure } from '../redux/slices/authSlice';
+
 import { saveUserProfile } from '../services/userService';
 
 /**
  * Register/Profile screen.
  *
- * This screen allows the user to create or update their profile.
- * It includes image picker, form validation, Redux state and Firestore saving.
+ * Dual purpose:
+ *  1. NEW USER  (coming from AuthScreen → Register):
+ *     Generates a unique Firestore document ID, saves the profile,
+ *     and dispatches loginSuccess so the app switches to MainTabs.
  *
- * @returns {React.ReactElement} Register/Profile screen.
+ *  2. EDIT PROFILE (coming from MainTabs → Profile tab):
+ *     Updates the existing Firestore document using the userId already
+ *     stored in authSlice. Does NOT dispatch loginSuccess again.
+ *
+ * @param {Object} props
+ * @param {Object} props.navigation - React Navigation object.
+ * @param {Object} props.route     - Route params: { isEditing?: boolean }
  */
-const RegisterProfileScreen = () => {
+const RegisterProfileScreen = ({ navigation, route }) => {
+  // When opened from the Profile tab the user is already authenticated.
+  const isEditing = route?.params?.isEditing ?? false;
+
   const dispatch = useDispatch();
 
-  const user = useSelector((state) => state.user);
+  const user   = useSelector((state) => state.user);
+  const auth   = useSelector((state) => state.auth);
 
   const {
     globalMessage,
@@ -71,20 +84,17 @@ const RegisterProfileScreen = () => {
     pickImage,
   } = useImagePicker();
 
-  const [profileImage, setLocalProfileImage] = useState(user.profileImage);
-  const [fullName, setFullName] = useState(user.fullName);
-  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber);
-  const [gender, setGender] = useState(user.gender);
-  const [email, setEmail] = useState(user.email);
-  const [language, setLanguage] = useState(user.language || 'es');
-  const [errors, setErrors] = useState({});
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileImage,  setLocalProfileImage] = useState(user.profileImage);
+  const [fullName,      setFullName]           = useState(user.fullName);
+  const [phoneNumber,   setPhoneNumber]        = useState(user.phoneNumber);
+  const [gender,        setGender]             = useState(user.gender);
+  const [email,         setEmail]              = useState(user.email);
+  const [language,      setLanguage]           = useState(user.language || 'es');
+  const [errors,        setErrors]             = useState({});
+  const [isSaving,      setIsSaving]           = useState(false);
 
   const t = createTranslator(language);
 
-  /**
-   * Updates local and Redux image state when a new image is selected.
-   */
   useEffect(() => {
     if (selectedImage?.uri) {
       setLocalProfileImage(selectedImage.uri);
@@ -92,59 +102,34 @@ const RegisterProfileScreen = () => {
     }
   }, [selectedImage, dispatch]);
 
-  /**
-   * Shows image picker errors when they happen.
-   */
   useEffect(() => {
     if (imagePickerError) {
-      Alert.alert('Image error', imagePickerError);
+      Alert.alert('Error de imagen', imagePickerError);
     }
   }, [imagePickerError]);
 
-  /**
-   * Clears global messages after they are shown.
-   */
   useEffect(() => {
     if (globalMessage) {
-      const timeoutId = setTimeout(() => {
-        clearGlobalMessage();
-      }, 3000);
-
-      return () => clearTimeout(timeoutId);
+      const id = setTimeout(clearGlobalMessage, 3000);
+      return () => clearTimeout(id);
     }
-
     return undefined;
   }, [globalMessage, clearGlobalMessage]);
 
-  /**
-   * Handles numeric-only phone input.
-   *
-   * @param {string} value - Input value.
-   */
   const handlePhoneChange = (value) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    setPhoneNumber(numericValue);
+    setPhoneNumber(value.replace(/[^0-9]/g, ''));
+  };
+
+  const handleLanguageSelect = (lang) => {
+    setLanguage(lang);
+    dispatch(setReduxLanguage(lang));
   };
 
   /**
-   * Handles language selection.
+   * Validates and saves the profile.
    *
-   * @param {string} selectedLanguage - Selected language code.
-   */
-  const handleLanguageSelect = (selectedLanguage) => {
-    setLanguage(selectedLanguage);
-    dispatch(setReduxLanguage(selectedLanguage));
-  };
-
-  /**
-   * Opens the device image picker.
-   */
-  const handlePickImage = async () => {
-    await pickImage();
-  };
-
-  /**
-   * Validates and saves the user profile.
+   * - New user: creates a Firestore document with a generated ID and logs in.
+   * - Editing:  updates the existing document, stays on the screen.
    */
   const handleSaveProfile = async () => {
     const profileData = {
@@ -165,18 +150,35 @@ const RegisterProfileScreen = () => {
 
     try {
       setErrors({});
-      setIsSavingProfile(true);
+      setIsSaving(true);
+      dispatch(authStart());
 
+      // Determine the userId: reuse existing one when editing, generate new for registration.
+      const userId = isEditing && auth.userId
+        ? auth.userId
+        : `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      // Persist to Redux
       dispatch(setUserProfile(profileData));
 
-      await saveUserProfile(DEFAULT_USER_ID, profileData);
+      // Persist to Firestore
+      await saveUserProfile(userId, profileData);
 
-      setGlobalMessage(t('profileSaved'));
-      Alert.alert(t('profileTitle'), t('profileSaved'));
+      if (isEditing) {
+        // Already authenticated — just show success message
+        setGlobalMessage(t('profileSaved'));
+        Alert.alert(t('profileTitle'), t('profileSaved'));
+        dispatch(authFailure(null)); // clear loading flag
+      } else {
+        // New registration — start session
+        dispatch(loginSuccess({ userId }));
+        // AppNavigator will automatically switch to MainTabs
+      }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to save profile.');
+      dispatch(authFailure(error.message));
+      Alert.alert('Error', error.message || 'No se pudo guardar el perfil.');
     } finally {
-      setIsSavingProfile(false);
+      setIsSaving(false);
     }
   };
 
@@ -186,9 +188,13 @@ const RegisterProfileScreen = () => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>{t('profileTitle')}</Text>
+        <Text style={styles.title}>
+          {isEditing ? t('profileTitle') : 'Crear cuenta'}
+        </Text>
         <Text style={styles.subtitle}>
-          Complete your profile before requesting a ride.
+          {isEditing
+            ? 'Actualiza tu información de perfil.'
+            : 'Completa tu perfil para empezar a solicitar viajes.'}
         </Text>
 
         {globalMessage ? (
@@ -197,19 +203,17 @@ const RegisterProfileScreen = () => {
           </View>
         ) : null}
 
+        {/* ── Profile image ── */}
         <View style={styles.imageSection}>
           <Pressable
             style={[
               styles.imageContainer,
               errors.profileImage ? styles.imageContainerError : null,
             ]}
-            onPress={handlePickImage}
+            onPress={pickImage}
           >
             {profileImage ? (
-              <Image
-                source={{ uri: profileImage }}
-                style={styles.profileImage}
-              />
+              <Image source={{ uri: profileImage }} style={styles.profileImage} />
             ) : (
               <Text style={styles.imagePlaceholder}>+</Text>
             )}
@@ -217,7 +221,7 @@ const RegisterProfileScreen = () => {
 
           <AppButton
             title={t('selectProfileImage')}
-            onPress={handlePickImage}
+            onPress={pickImage}
             isLoading={isPickingImage}
             variant="secondary"
           />
@@ -231,7 +235,7 @@ const RegisterProfileScreen = () => {
           label={t('fullName')}
           value={fullName}
           onChangeText={setFullName}
-          placeholder="Enter your full name"
+          placeholder="Tu nombre completo"
           maxLength={MAX_FULL_NAME_LENGTH}
           error={errors.fullName}
         />
@@ -240,7 +244,7 @@ const RegisterProfileScreen = () => {
           label={t('phoneNumber')}
           value={phoneNumber}
           onChangeText={handlePhoneChange}
-          placeholder="Enter your phone number"
+          placeholder="Ej: 3001234567"
           keyboardType="numeric"
           error={errors.phoneNumber}
         />
@@ -250,7 +254,7 @@ const RegisterProfileScreen = () => {
           value={gender}
           options={GENDER_OPTIONS}
           onSelect={setGender}
-          placeholder="Select your gender"
+          placeholder="Selecciona tu género"
           error={errors.gender}
         />
 
@@ -258,7 +262,7 @@ const RegisterProfileScreen = () => {
           label={t('email')}
           value={email}
           onChangeText={setEmail}
-          placeholder="Enter your email"
+          placeholder="tu@correo.com"
           keyboardType="email-address"
           error={errors.email}
         />
@@ -268,20 +272,28 @@ const RegisterProfileScreen = () => {
           value={language}
           options={LANGUAGE_OPTIONS}
           onSelect={handleLanguageSelect}
-          placeholder="Select your language"
+          placeholder="Selecciona tu idioma"
           error={errors.language}
         />
 
         <AppButton
-          title={t('saveProfile')}
+          title={isEditing ? t('saveProfile') : 'Crear cuenta'}
           onPress={handleSaveProfile}
-          isLoading={isSavingProfile}
+          isLoading={isSaving}
         />
+
+        {!isEditing ? (
+          <AppButton
+            title="Ya tengo cuenta"
+            onPress={() => navigation.navigate('Login')}
+            variant="secondary"
+          />
+        ) : null}
       </ScrollView>
 
       <LoadingOverlay
-        visible={isSavingProfile}
-        message="Saving profile..."
+        visible={isSaving}
+        message={isEditing ? 'Guardando perfil...' : 'Creando cuenta...'}
       />
     </SafeAreaView>
   );
